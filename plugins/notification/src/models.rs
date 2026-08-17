@@ -126,20 +126,17 @@ pub enum Schedule {
 // custom ISO-8601 serialization that does not use 6 digits for years.
 mod iso8601 {
     use serde::{ser::Error as _, Serialize, Serializer};
-    use time::{
-        format_description::well_known::iso8601::{Config, EncodedConfig},
-        format_description::well_known::Iso8601,
-        OffsetDateTime,
-    };
-
-    const SERDE_CONFIG: EncodedConfig = Config::DEFAULT.encode();
+    use time::{macros::format_description, OffsetDateTime, UtcOffset};
 
     pub fn serialize<S: Serializer>(
         datetime: &OffsetDateTime,
         serializer: S,
     ) -> Result<S::Ok, S::Error> {
         datetime
-            .format(&Iso8601::<SERDE_CONFIG>)
+            .to_offset(UtcOffset::UTC)
+            .format(format_description!(
+                "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3]Z"
+            ))
             .map_err(S::Error::custom)?
             .serialize(serializer)
     }
